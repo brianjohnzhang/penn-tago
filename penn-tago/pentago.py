@@ -15,20 +15,20 @@ def init_game():
 # Return a new board state after processing the move
 def move(board_state, new_position, rotate_quadrant, rotate_clockwise):
     # Check out the current board state to see if it is possible
-    if is_valid_board_state(board_state):
-        game_complete_status = game_complete(board_state)
-        if game_complete_status[0]:
-            if game_complete_status[1] == 0:
-                raise ValueError("Black player has already won.")
-            else:
-                raise ValueError("White player has already won.")
+    # if is_valid_board_state(board_state):
+    #     game_complete_status = game_complete(board_state)
+    #     if game_complete_status[0]:
+    #         if game_complete_status[1] == 0:
+    #             raise ValueError("Black player has already won.")
+    #         else:
+    #             raise ValueError("White player has already won.")
     # Check that the other variables are valid
-    elif not (0 <= new_position[0] < 6 and 0 <= new_position[1] < 6):
+    if not (0 <= new_position[0] < 6 and 0 <= new_position[1] < 6):
         raise ValueError("Invalid position, both indices must be between [0, 6).")
-    elif not (0 <= rotate_quadrant < 4):
+    elif not (1 <= rotate_quadrant <= 4):
         raise ValueError("Invalid quadrant: must be integer between [1, 4].")
-    elif rotate_clockwise is not True and rotate_clockwise is not False:
-        raise TypeError("Rotate quadrant clockwise must be either True or False.")
+    elif (rotate_clockwise is not True and rotate_clockwise is not False) and not (0 <= rotate_clockwise <= 1):
+        raise TypeError("Rotate quadrant clockwise must be either True, False, 0 or 1.")
 
     # If there is already something in that spot, reject the move
     if np.any(board_state[0:2, new_position[1], new_position[0]] == 1):
@@ -61,32 +61,46 @@ def move(board_state, new_position, rotate_quadrant, rotate_clockwise):
     # Change the color
     board_state[2, :, :] = 1 - board_state[2, :, :]
 
-    # Return completed game with attached boolean of whether the game is won
-    if game_complete(board_state)[0]:
-        return board_state, True
+    # Return completed game with attached int of whether the game is won:
+    # -1: incomplete
+    # 0: black won
+    # 1: white won
+    # 2: tied
+    game_complete_status = game_complete(board_state)
+    if game_complete_status[0]:
+        return board_state, game_complete_status[1]
     else:
-        return board_state, False
+        return board_state, -1
 
 
-# Check if the game is over and return who has won
+# Check if the game is over and return who has won:
+# 0: black won
+# 1: white won
+# 2: tied
 def game_complete(board_state):
-    if is_valid_board_state(board_state):
-        for i in range(0, 2):
-            for y in range(0, 6):
-                for x in range(0, 6):
-                    if board_state[i, y, x] == 1:
-                        if x <= 1:
-                            if np.sum(board_state[i, y, list(range(x, x + 5))]) == 5:
-                                return True, i
-                        if y <= 1:
-                            if np.sum(board_state[i, y, x]) == 5:
-                                return True, i
-                        if x <= 1 and y <= 1:
-                            if np.sum(board_state[i, list(range(y, y + 5)), list(range(x, x + 5))]) == 5:
-                                return True, i
+    # Check for 5-in-a-row
+    for i in range(0, 2):
+        for y in range(0, 6):
+            for x in range(0, 6):
+                if board_state[i, y, x] == 1:
+                    if x <= 1:
+                        if np.sum(board_state[i, y, list(range(x, x + 5))]) == 5:
+                            return True, i
+                    if y <= 1:
+                        if np.sum(board_state[i, y, x]) == 5:
+                            return True, i
+                    if x <= 1 and y <= 1:
+                        if np.sum(board_state[i, list(range(y, y + 5)), list(range(x, x + 5))]) == 5:
+                            return True, i
+    # If there isn't one, see if the board is full for a tie
+    if np.sum(board_state[0:2, :, :]) == 36:
+        return True, 2
+    # Otherwise, the game hasn't ended
+    else:
         return False, 0
 
 
+# Debug use: determines if a board is valid or not.
 def is_valid_board_state(board_state):
     black_pieces = np.sum(board_state[0, :, :])
     white_pieces = np.sum(board_state[1, :, :])
@@ -111,7 +125,7 @@ def is_valid_board_state(board_state):
 
 
 def visualize_board(board_state):
-    if board_state[2, 0, 0] == 1:
+    if board_state[2, 0, 0] == 0:
         print("Turn: BLACK")
     else:
         print("Turn: WHITE")
