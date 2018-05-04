@@ -19,12 +19,12 @@ class GameBoard:
               for j in range(0,6):
                   slots[i][j] = moves[i][j]
 	
-    def setLastMove(move):
-        lastMove = move
+    def set_last_move(self, move):
+        self.lastMove = move
     
-    def makeMove(player, row, col):
+    def makeMove(self, player, row, col):
 		##use -1 since input is from 1-6, not 0-5
-        slots[row - 1][col - 1] = player
+        self.slots[row - 1][col - 1] = player
 	
     def isValidMove(row, col):
         return (slots[row - 1][col - 1] == 0)

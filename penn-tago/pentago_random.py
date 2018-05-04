@@ -10,19 +10,12 @@ def random_trials(num_epochs, epoch_size, print_results):
         results = np.zeros(epoch_size)
 
         for i in range(0, epoch_size):
-            game_won = False
-            board_state = p.init_game()
-            while not game_won:
-                occupied_tiles = board_state[0] + board_state[1]
-                unoccupied = []
-                for y in range(0, 6):
-                    for x in range(0, 6):
-                        if occupied_tiles[y, x] == 0:
-                            unoccupied.append([x, y])
-
-                board_state, status_code = p.move(board_state, unoccupied[random.randint(0, len(unoccupied) - 1)], random.randint(1, 4), random.randint(0, 1))
-                game_won = status_code > -1
-                results[i] = status_code
+            status = -1
+            game_state, open_positions = p.init_game()
+            while status == -1:
+                game_state, open_positions, status = p.move_debug(game_state, random.choice(open_positions),
+                                                                  random.randint(1, 4), random.randint(0, 1))
+            results[i] = status
 
         black_wins = np.sum(results == 0)
         white_wins = np.sum(results == 1)
@@ -32,4 +25,4 @@ def random_trials(num_epochs, epoch_size, print_results):
 
 
 if __name__ == "__main__":
-    random_trials(100, 1000, True)
+    random_trials(100, 100, True)
