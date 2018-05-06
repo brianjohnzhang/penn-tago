@@ -9,7 +9,7 @@ This code provides the backend to a game of Pentago. It provides several functio
 # Create and return a fresh game_state, as well as a list of open move positions (all of them)
 def init_game():
     game_state = np.zeros((3, 6, 6))
-    return game_state, find_open_positions(game_state)
+    return game_state, find_open_positions(game_state), -1
 
 
 # Find all open array vectors
