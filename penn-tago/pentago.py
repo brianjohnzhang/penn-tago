@@ -93,7 +93,12 @@ def _is_valid_game_state(game_state):
 # Debug issues with game_state and moves, and then move
 #   Inputs: same as move()
 #   Outputs: same as move()
-def move_debug(game_state_old, new_position, rotate_quadrant, rotate_clockwise):
+def move_debug(game_state_old, move):
+    # Unpack move into subcomponents
+    new_position = move[0]
+    rotate_quadrant = move[1]
+    rotate_clockwise = move[2]
+
     # Check out the current array state to see if it is possible
     if _is_valid_game_state(game_state_old):
         status_code = _check_game_status(game_state_old)
@@ -116,7 +121,7 @@ def move_debug(game_state_old, new_position, rotate_quadrant, rotate_clockwise):
             raise ValueError("That position on the board is already occupied.")
 
     # Continue with regular move function
-    return move(game_state_old, new_position, rotate_quadrant, rotate_clockwise)
+    return move(game_state_old, move)
 
 
 # Process a move on a game state

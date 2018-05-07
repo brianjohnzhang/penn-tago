@@ -1,25 +1,40 @@
-import pygame, sys
-from pygame.locals import *
+import sys
+import pygame
+
 import pentago
-import random
-import copy
-pygame.font.init()
 import numpy as np
+import torch
 
-##COLORS##
-#             R    G    B 
-WHITE    = (255, 255, 255)
-BLACK    = (0,   0,   0)
-BROWN   = (130, 82,   0)
+import penntago_nn, penntago_ai
 
+# Colors
+#         R    G    B
+WHITE = (255, 255, 255)
+BLACK = (0,   0,   0)
+BROWN = (130, 82,   0)
+
+pygame.font.init()
+
+MONTECARLO_SPEED = "quick"
+FOLDER_PATH = "./ai_states/montecarlo/" + MONTECARLO_SPEED + "/"
+EPOCHS_TRAINED = 500
 
 class Game:
     def __init__(self):
+        v_net = penntago_nn.NeuralNet()
+        p_net = penntago_nn.NeuralNet()
+        v_net.load_state_dict(torch.load(FOLDER_PATH + str(EPOCHS_TRAINED) + "v"))
+        p_net.load_state_dict(torch.load(FOLDER_PATH + str(EPOCHS_TRAINED) + "p"))
+        self.ai = penntago_ai.Player("montecarlo_" + MONTECARLO_SPEED, v_net, p_net)
         self.graphics = Graphics()
         self.board = Board()
-        self.game_state, self.open_positions, _ = pentago.init_game()
+        self.game_state, self.valid_moves, self.status_code = pentago.init_game()
         self.player_color = BLACK
-        
+        self.mouse_pos = self.graphics.board_coords(pygame.mouse.get_pos())
+        self.quad = 1
+        self.dragging = False
+        self.x,  self.y, self.x_end, self.y_end = 0, 0, 0, 0
+
     def setup(self):
         self.graphics.setup_window()
 
@@ -34,37 +49,47 @@ class Game:
                 self.terminate_game()
             
             if event.type == pygame.MOUSEBUTTONDOWN:
-                (self.x,self.y) = self.mouse_pos
+                (self.x, self.y) = self.mouse_pos
                 fake_game_state = np.copy(self.game_state)
                 fake_game_state[0][self.y][self.x] = 1
                 self.board.update_board(fake_game_state)
             if event.type == pygame.KEYDOWN:
-                if event.key == K_1:
+                if event.key == pygame.K_1:
                     self.quad = 1
-                if event.key == K_2:
+                if event.key == pygame.K_2:
                     self.quad = 2
-                if event.key == K_3:
+                if event.key == pygame.K_3:
                     self.quad = 3
-                if event.key == K_4:
+                if event.key == pygame.K_4:
                     self.quad = 4
-                if event.key == K_COMMA:
-                    self.game_state, self.open_positions, _ = pentago.move(self.game_state, [self.x,self.y], self.quad, False)
+                if event.key == pygame.K_COMMA:
+                    self.game_state, self.valid_moves, _ = pentago.move(self.game_state,
+                                                                        [[self.x, self.y], self.quad, False])
                     self.board.update_board(self.game_state)
                     self.update()
                     pygame.time.wait(2000)
-                    self.game_state, self.open_positions, _ = pentago.move_debug(self.game_state, random.choice(self.open_positions), random.randint(1, 4), random.randint(0, 1))
+                    #
+                    self.game_state, self.valid_moves, _ = pentago.move(self.game_state,
+                                                                        self.ai.select_move(self.game_state,
+                                                                                            self.valid_moves,
+                                                                                            self.status_code)
+                                                                        [0])
                     self.board.update_board(self.game_state)
-                if event.key == K_PERIOD:
-                    self.game_state, self.open_positions, _ = pentago.move(self.game_state, [self.x,self.y], self.quad, True)
+                if event.key == pygame.K_PERIOD:
+                    self.game_state, self.valid_moves, _ = pentago.move(self.game_state,
+                                                                        [[self.x, self.y], self.quad, True])
                     self.board.update_board(self.game_state)
                     self.update()
                     pygame.time.wait(2000)
-                    self.game_state, self.open_positions, _ = pentago.move_debug(self.game_state, random.choice(self.open_positions), random.randint(1, 4), random.randint(0, 1))
+                    self.game_state, self.valid_moves, _ = pentago.move(self.game_state,
+                                                                        self.ai.select_move(self.game_state,
+                                                                                            self.valid_moves,
+                                                                                            self.status_code)
+                                                                        [0])
                     self.board.update_board(self.game_state)
 
     def update(self):
         self.graphics.update_display(self.board)
-        
 
     def terminate_game(self):
         pygame.quit()
@@ -76,7 +101,8 @@ class Game:
         while True: # main game loop
             self.event_loop()
             self.update()           
-            
+
+
 class Graphics:
     def __init__(self):
         self.caption = "Pentago"
@@ -88,7 +114,6 @@ class Graphics:
         self.screen = pygame.display.set_mode((self.window_size, self.window_size))
         self.background = pygame.Surface(self.screen.get_size()).convert()
         self.background.fill(BROWN)
-        
 
         self.square_size = int(self.window_size / 6)
         self.piece_size = int(self.square_size / 2)
@@ -101,7 +126,6 @@ class Graphics:
 
     def update_display(self, board):
         self.screen.blit(self.background, (0,0))
-		
         self.draw_board_pieces(board)
         self.draw_board_squares(board)
 
@@ -116,16 +140,16 @@ class Graphics:
             for y in range(0, 6):
                 pygame.draw.rect(self.screen, board.matrix[x][y].color, (x * self.square_size, y * self.square_size, self.square_size, self.square_size), 1)
                 if (x == 0 or x == 3) and (y == 0 or y == 3):
-                 pygame.draw.rect(self.screen, board.matrix[x][y].color, (x * self.square_size, y * self.square_size, self.square_size*3, self.square_size*3), 4)    
-	
+                    pygame.draw.rect(self.screen, board.matrix[x][y].color, (x * self.square_size, y * self.square_size, self.square_size*3, self.square_size*3), 4)
+
     def draw_board_pieces(self, board):
         
         for x in range(0, 6):
             for y in range(0, 6):
                 if board.matrix[x][y].occupant == "WHITE":
-                    pygame.draw.circle(self.screen, WHITE, self.pixel_coords((x,y)), self.piece_size)
+                    pygame.draw.circle(self.screen, WHITE, self.pixel_coords((x, y)), self.piece_size)
                 elif board.matrix[x][y].occupant == "BLACK":
-                    pygame.draw.circle(self.screen, BLACK, self.pixel_coords((x,y)), self.piece_size)
+                    pygame.draw.circle(self.screen, BLACK, self.pixel_coords((x, y)), self.piece_size)
 
     def pixel_coords(self, board_coords):
  
@@ -147,13 +171,13 @@ class Graphics:
 
 class Board:
     def __init__(self):
-        self.matrix =  [[""] * 6 for i in range(0,6)]
+        self.matrix = [[""] * 6 for _ in range(0, 6)]
 
-        for x in range(0,6):
-            for y in range(0,6):
+        for x in range(0, 6):
+            for y in range(0, 6):
                 self.matrix[y][x] = Space(WHITE)
     
-    #takes in numpy array of gamestate (no moves or winner)
+    # takes in numpy array of gamestate (no moves or winner)
     def update_board(self, board_mat):
 
         for y in reversed(range(0,6)):
@@ -167,13 +191,12 @@ class Board:
     
 
 class Space:
-	def __init__(self, color, occupant = None):
-		self.color = color 
-		self.occupant = occupant # occupant is a Square object
+    def __init__(self, color, occupant=None):
+        self.color = color
+        self.occupant = occupant
+    # occupant is a Square object
 
-def main():
-	game = Game()
-	game.main()
 
 if __name__ == "__main__":
-	main()
+    game = Game()
+    game.main()
