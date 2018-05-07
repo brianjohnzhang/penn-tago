@@ -19,6 +19,7 @@ MONTECARLO_SPEED = "quick"
 FOLDER_PATH = "./ai_states/montecarlo/" + MONTECARLO_SPEED + "/"
 EPOCHS_TRAINED = 500
 
+
 class Game:
     def __init__(self):
         v_net = penntago_nn.NeuralNet()
@@ -33,16 +34,13 @@ class Game:
         self.mouse_pos = self.graphics.board_coords(pygame.mouse.get_pos())
         self.quad = 1
         self.dragging = False
-        self.x,  self.y, self.x_end, self.y_end = 0, 0, 0, 0
+        self.x, self.y, self.x_end, self.y_end = 0, 0, 0, 0
 
     def setup(self):
         self.graphics.setup_window()
 
     def event_loop(self):
         self.mouse_pos = self.graphics.board_coords(pygame.mouse.get_pos()) # what square is the mouse in?
-        self.x,  self.y, self.x_end, self.y_end = 0, 0, 0, 0
-        self.dragging = False
-        self.quad = 1
         for event in pygame.event.get():
             
             if event.type == pygame.QUIT:
@@ -50,19 +48,22 @@ class Game:
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 (self.x, self.y) = self.mouse_pos
+                print(self.mouse_pos)
                 fake_game_state = np.copy(self.game_state)
-                fake_game_state[0][self.y][self.x] = 1
-                self.board.update_board(fake_game_state)
+                if fake_game_state[0][self.x][self.y] == 0 and fake_game_state[1][self.x][self.y] == 0:
+                    fake_game_state[0][self.x][self.y] = 1
+                    self.board.update_board(fake_game_state)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     self.quad = 1
-                if event.key == pygame.K_2:
+                elif event.key == pygame.K_2:
                     self.quad = 2
-                if event.key == pygame.K_3:
+                elif event.key == pygame.K_3:
                     self.quad = 3
-                if event.key == pygame.K_4:
+                elif event.key == pygame.K_4:
                     self.quad = 4
-                if event.key == pygame.K_COMMA:
+                elif event.key == pygame.K_q:
+                    print([[self.x, self.y], self.quad, True])
                     self.game_state, self.valid_moves, _ = pentago.move(self.game_state,
                                                                         [[self.x, self.y], self.quad, False])
                     self.board.update_board(self.game_state)
@@ -75,7 +76,8 @@ class Game:
                                                                                             self.status_code)
                                                                         [0])
                     self.board.update_board(self.game_state)
-                if event.key == pygame.K_PERIOD:
+                elif event.key == pygame.K_e:
+                    print([[self.x, self.y], self.quad, True])
                     self.game_state, self.valid_moves, _ = pentago.move(self.game_state,
                                                                         [[self.x, self.y], self.quad, True])
                     self.board.update_board(self.game_state)
@@ -153,21 +155,19 @@ class Graphics:
 
     def pixel_coords(self, board_coords):
  
-        return (board_coords[0] * self.square_size + self.piece_size, board_coords[1] * self.square_size + self.piece_size)
+        return (board_coords[0] * self.square_size + self.piece_size, (5 - board_coords[1]) * self.square_size + self.piece_size)
     
     def board_coords(self, coords):
-        
         (pixel_x, pixel_y) = coords
-
-        return (int(pixel_x / self.square_size), int(pixel_y / self.square_size))	
+        return int(pixel_x / self.square_size), 5 - int(pixel_y / self.square_size)
 
     def draw_message(self, message):
- 
         self.message = True
         self.font_obj = pygame.font.Font('freesansbold.ttf', 44)
         self.text_surface_obj = self.font_obj.render(message, True, WHITE, BLACK)
         self.text_rect_obj = self.text_surface_obj.get_rect()
         self.text_rect_obj.center = (self.window_size / 2, self.window_size / 2)
+
 
 class Board:
     def __init__(self):
@@ -175,19 +175,19 @@ class Board:
 
         for x in range(0, 6):
             for y in range(0, 6):
-                self.matrix[y][x] = Space(WHITE)
+                self.matrix[x][y] = Space(WHITE)
     
     # takes in numpy array of gamestate (no moves or winner)
     def update_board(self, board_mat):
 
-        for y in reversed(range(0,6)):
-            for x in range(0,6):
+        for y in reversed(range(0, 6)):
+            for x in range(0, 6):
                 if board_mat[0, x, y] == 1:
-                    self.matrix[y][x].occupant = "BLACK"
+                    self.matrix[x][y].occupant = "BLACK"
                 elif board_mat[1, x, y] == 1:
-                    self.matrix[y][x].occupant = "WHITE"
+                    self.matrix[x][y].occupant = "WHITE"
                 else:
-                    self.matrix[y][x].occupant = ""     
+                    self.matrix[x][y].occupant = ""
     
 
 class Space:
