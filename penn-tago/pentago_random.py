@@ -1,6 +1,6 @@
-import pentago as p
 import numpy as np
-import random
+import penntago_game
+import penntago_ai
 
 
 def random_trials(num_epochs, epoch_size, print_results):
@@ -10,12 +10,10 @@ def random_trials(num_epochs, epoch_size, print_results):
         results = np.zeros(epoch_size)
 
         for i in range(0, epoch_size):
-            status = -1
-            game_state, open_positions = p.init_game()
-            while status == -1:
-                game_state, open_positions, status = p.move_debug(game_state, random.choice(open_positions),
-                                                                  random.randint(1, 4), random.randint(0, 1))
-            results[i] = status
+            game = penntago_game.Game(penntago_ai.Player("random"), penntago_ai.Player("random"))
+            while game.status_code == -1:
+                game.take_turn()
+            results[i] = game.status_code
 
         black_wins = np.sum(results == 0)
         white_wins = np.sum(results == 1)
@@ -25,4 +23,4 @@ def random_trials(num_epochs, epoch_size, print_results):
 
 
 if __name__ == "__main__":
-    random_trials(100, 100, True)
+    random_trials(1, 100, True)

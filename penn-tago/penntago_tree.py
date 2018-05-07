@@ -2,11 +2,11 @@ import math
 
 
 class Node:
-    def __init__(self, game_state, open_positions, game_status):
+    def __init__(self, game_state, valid_moves, status_code):
        
         self.game_state = game_state
-        self.open_positions = open_positions
-        self.game_status = game_status
+        self.valid_moves = valid_moves
+        self.status_code = status_code
         
         # number of times this node has been selected
         self.N = 1
@@ -53,8 +53,8 @@ class Node:
 
 
 class Tree:
-    def __init__(self, game_state, open_positions, game_status):
-        self.root = Node(game_state, open_positions, game_status)
+    def __init__(self, game_state, valid_moves, status_code):
+        self.root = Node(game_state, valid_moves, status_code)
         self.nodes = [self.root]
     
     def add(self, node):

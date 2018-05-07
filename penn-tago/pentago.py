@@ -6,27 +6,30 @@ This code provides the backend to a game of Pentago. It provides several functio
 """
 
 
+ALL_ROTATIONS = [(1, False), (2, False), (3, False), (4, False), (1, True), (2, True), (3, True), (4, True)]
+
+
 # Create and return a fresh game_state, as well as a list of open move positions (all of them)
 def init_game():
-    return np.zeros((3, 6, 6)), find_open_positions(np.zeros((3, 6, 6))), -1
+    return np.zeros((3, 6, 6)), find_valid_moves(np.zeros((3, 6, 6))), -1
 
 
 # Find all open array vectors
 #   Input: game_state, a valid (3, 6, 6) numpy array game state
 #   Output: a list of tuples containing open move positions in array coordinates
-def find_open_positions(game_state):
+def find_valid_moves(game_state):
     open_positions = []
     for row in range(0, 6):
         for col in range(0, 6):
             if game_state[0, row, col] == 0 and game_state[1, row, col] == 0:
                 open_positions.append((row, col))
-    return open_positions
+    return [[pos, rot[0], rot[1]] for pos in open_positions for rot in ALL_ROTATIONS]
 
 
 # From an game_state, determine if the game is over
 #   Input: game_state, a valid (3, 6, 6) numpy array game state
 #   Output: an int, 0: black won, 1: white won, 2: tied
-def check_game_status(game_state):
+def _check_game_status(game_state):
     pieces = [np.sum(game_state[0, :, :]), np.sum(game_state[1, :, :])]
     # Can't have 5 in a row yet
     if pieces[0] < 5:
@@ -64,7 +67,7 @@ def check_game_status(game_state):
 # Checks if an game_state is valid or not
 #   Input: game_state, a valid (3, 6, 6) numpy array game state
 #   Output: True or an error
-def is_valid_game_state(game_state):
+def _is_valid_game_state(game_state):
     black_pieces = np.sum(game_state[0, :, :])
     white_pieces = np.sum(game_state[1, :, :])
     if not np.all(np.logical_or(game_state == 0, game_state == 1)):
@@ -92,13 +95,13 @@ def is_valid_game_state(game_state):
 #   Outputs: same as move()
 def move_debug(game_state_old, new_position, rotate_quadrant, rotate_clockwise):
     # Check out the current array state to see if it is possible
-    if is_valid_game_state(game_state_old):
-        game_status = check_game_status(game_state_old)
-        if game_status == 0:
+    if _is_valid_game_state(game_state_old):
+        status_code = _check_game_status(game_state_old)
+        if status_code == 0:
             raise ValueError("Black player has already won.")
-        elif game_status == 1:
+        elif status_code == 1:
             raise ValueError("White player has already won.")
-        elif game_status == 2:
+        elif status_code == 2:
             raise ValueError("The game is tied.")
         # Check that the other variables are valid
         if not (0 <= new_position[0] < 6 and 0 <= new_position[1] < 6):
@@ -119,16 +122,23 @@ def move_debug(game_state_old, new_position, rotate_quadrant, rotate_clockwise):
 # Process a move on a game state
 #   Inputs:
 #       game_state_old, a valid (3, 6, 6) numpy array game state
-#       new_position, (row, col) of game_state to be filled. 0 <= x, y < 6
-#       rotate_quadrant, quadrants are x-major, or 1: bottom-left, 2: top-left, 3: bottom-right, 4: top-right
-#           pieces are laid out in traditional XY, unlike the numpy array
-#       rotate_clockwise, boolean, 0 or 1 to indicate rotation direction
+#       move, made of:
+#           new_position, (row, col) of game_state to be filled. 0 <= x, y < 6
+#           rotate_quadrant, quadrants are x-major, or 1: bottom-left, 2: top-left, 3: bottom-right, 4: top-right
+#               pieces are laid out in traditional XY, unlike the numpy array
+#           rotate_clockwise, boolean, 0 or 1 to indicate rotation direction
 #   Output:
-#       (game_state_new, open_positions, game_status)
-def move(game_state_old, new_position, rotate_quadrant, rotate_clockwise):
+#       (game_state_new, open_positions, status_code)
+def move(game_state_old, move):
+    # Unpack move into subcomponents
+    new_position = move[0]
+    rotate_quadrant = move[1]
+    rotate_clockwise = move[2]
 
+    # Make it safe so that we don't modify the source
     game_state_new = np.copy(game_state_old)
 
+    # Update the correct index
     game_state_new[int(game_state_new[2, 0, 0]), new_position[0], new_position[1]] = 1
 
     # Turn the appropriate quadrant
@@ -157,7 +167,7 @@ def move(game_state_old, new_position, rotate_quadrant, rotate_clockwise):
     game_state_new[2, :, :] = 1 - game_state_new[2, :, :]
 
     # Return completed game with attached int of whether the game is won:
-    return game_state_new, find_open_positions(game_state_new), check_game_status(game_state_new)
+    return game_state_new, find_valid_moves(game_state_new), _check_game_status(game_state_new)
 
 
 # Creates a console visualization of the board from an game_state
