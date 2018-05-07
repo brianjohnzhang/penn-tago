@@ -191,7 +191,7 @@ v_pred = v_net(Variable(torch.from_numpy(np.array(np.array(data_and_labels)[:,0]
 p_pred = p_net(Variable(torch.from_numpy(np.array(np.array(data_and_labels)[:,0].tolist())).float().unsqueeze(0)).view(len(data_and_labels),1,108))
 
 v_true = Variable(torch.from_numpy(np.array(np.array(data_and_labels)[:,1].tolist())).float())
-p_true = Variable(torch.from_numpy(np.array(np.array(data_and_labels)[:,1].tolist())).float())
+p_true = Variable(torch.from_numpy(np.array(np.array(data_and_labels)[:,2].tolist())).float())
 
 # Calculate the loss using predicted labels and ground truth labels
 v_loss = criterion(v_pred, v_true.long())
