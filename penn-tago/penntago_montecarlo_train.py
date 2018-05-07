@@ -7,7 +7,6 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 import penntago_nn
-import penntago_montecarlo
 import penntago_game
 import penntago_ai
 
@@ -30,8 +29,8 @@ for (_, _, filenames) in os.walk(FOLDER_PATH):
         if filename != "" and int(filename[0:len(filename)-1]) > most_recent:
             most_recent = int(filename[0:len(filename)-1])
 if most_recent != 0:
-    v_net.load_state_dict(torch.load("./ai_states/montecarlo/" + str(most_recent) + "v"))
-    p_net.load_state_dict(torch.load("./ai_states/montecarlo/" + str(most_recent) + "p"))
+    v_net.load_state_dict(torch.load(FOLDER_PATH + str(most_recent) + "v"))
+    p_net.load_state_dict(torch.load(FOLDER_PATH + str(most_recent) + "p"))
 
 for n in range(0, NUM_EPOCHS):
     print(n)
