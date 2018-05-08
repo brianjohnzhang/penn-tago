@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import pentago
 import penntago_tree
 
+import numpy as np
 
 """
 penntago_montecarlo.py, combines and executes Pentago games with the tree and neural network.
@@ -26,7 +27,7 @@ def select_move(v_net, p_net, dt, game_state, valid_moves, status_code):
     current_tree = penntago_tree.Tree(game_state, valid_moves, status_code)
     current_node = current_tree.root
 
-    # Do this 1600 times, or 10 seconds at most:
+    # Do this 1600 times, or until it exceeds alotted time:
     t = time.time()
     for _ in range(0, 1600):
         # Get child nodes
@@ -57,10 +58,10 @@ def select_move(v_net, p_net, dt, game_state, valid_moves, status_code):
                     # predict v and p for this node using learner
                     # print(torch.from_numpy(np.array(new_gamestate)).float().unsqueeze(0))
                     # print(Variable(torch.from_numpy(np.array(new_gamestate)).float().unsqueeze(0)))
-                    v_prediction = v_net(Variable(torch.from_numpy(game_state_new).float().unsqueeze(0))
+                    v_prediction = v_net(Variable(torch.from_numpy(np.array([game_state_new[0], game_state_new[1], current_node.game_state[2]])).float().unsqueeze(0))
                                          .view(1, 1, 108))
                     v = v_prediction.data.numpy()[0]
-                    p_prediction = p_net(Variable(torch.from_numpy(game_state_new).float().unsqueeze(0))
+                    p_prediction = p_net(Variable(torch.from_numpy(np.array([game_state_new[0], game_state_new[1], current_node.game_state[2]])).float().unsqueeze(0))
                                          .view(1, 1, 108))
                     p = p_prediction.data.numpy()[0]
 
