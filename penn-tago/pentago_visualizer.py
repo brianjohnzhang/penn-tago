@@ -5,7 +5,14 @@ import pentago
 import numpy as np
 import torch
 
+
 import penntago_nn, penntago_ai
+
+#########################################################################################
+### Visualization code is partially adapted from Everest Witman's implementation
+### of checkers: https://github.com/everestwitman/Pygame-Checkers/blob/master/checkers.py
+########################################################################################
+
 
 # Colors
 #         R    G    B
@@ -16,7 +23,7 @@ BROWN = (130, 82,   0)
 pygame.font.init()
 
 MONTECARLO_SPEED = "quick"
-FOLDER_PATH = "./ai_states/montecarlo/" + MONTECARLO_SPEED + "/"
+FOLDER_PATH = ""
 EPOCHS_TRAINED = 500
 
 
@@ -160,14 +167,6 @@ class Graphics:
     def board_coords(self, coords):
         (pixel_x, pixel_y) = coords
         return int(pixel_x / self.square_size), 5 - int(pixel_y / self.square_size)
-
-    def draw_message(self, message):
-        self.message = True
-        self.font_obj = pygame.font.Font('freesansbold.ttf', 44)
-        self.text_surface_obj = self.font_obj.render(message, True, WHITE, BLACK)
-        self.text_rect_obj = self.text_surface_obj.get_rect()
-        self.text_rect_obj.center = (self.window_size / 2, self.window_size / 2)
-
 
 class Board:
     def __init__(self):
