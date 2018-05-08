@@ -42,14 +42,14 @@ for n in range(0, NUM_CYCLES):
     game_history_wins = []
     v_loss_np = np.zeros((EPOCH_SIZE))
     p_loss_np = np.zeros((EPOCH_SIZE))
+    # Specify the loss function
+    criterion = nn.MSELoss()
+
+    # Specify the optimizer
+    v_optimizer = optim.SGD(v_net.parameters(), lr=0.001, momentum=0.9, weight_decay=5e-4)
+    p_optimizer = optim.SGD(p_net.parameters(), lr=0.001, momentum=0.9, weight_decay=5e-4)
+    
     for i in range(0, GAMES_PER_CYLCE):
-
-        # Specify the loss function
-        criterion = nn.CrossEntropyLoss()
-
-        # Specify the optimizer
-        v_optimizer = optim.SGD(v_net.parameters(), lr=0.001, momentum=0.9, weight_decay=5e-4)
-        p_optimizer = optim.SGD(p_net.parameters(), lr=0.001, momentum=0.9, weight_decay=5e-4)
 
         # Play a game against self
         game = penntago_game.Game(penntago_ai.Player("montecarlo_" + MONTECARLO_SPEED, v_net, p_net),
@@ -99,8 +99,8 @@ for n in range(0, NUM_CYCLES):
         p_true = Variable(torch.from_numpy(np.array(batch_travel)).float())
     
          # Calculate the loss using predicted labels and ground truth labels
-        v_loss = criterion(v_pred, v_true.long())
-        p_loss = criterion(p_pred, p_true.long())
+        v_loss = criterion(v_pred, v_true)
+        p_loss = criterion(p_pred, p_true)
     
         # zero gradient
         v_optimizer.zero_grad()
@@ -112,11 +112,8 @@ for n in range(0, NUM_CYCLES):
         v_optimizer.step()
         p_optimizer.step()
         
-        v_batch_loss = sum(v_loss.data.numpy())
-        p_batch_loss = sum(p_loss.data.numpy())
-        
-        v_loss_np[epoch] = v_batch_loss/EPOCH_SIZE
-        p_loss_np[epoch] = p_batch_loss/EPOCH_SIZE
+        v_loss_np[epoch] = v_loss
+        p_loss_np[epoch] = p_loss
         
     # Plot the loss over epoch
     plt.figure()
