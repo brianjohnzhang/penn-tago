@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 penntago_montecarlo_train.py, saves and reloads training Monte Carlo tree.
 """
 
-MONTECARLO_SPEED = "slow"
+MONTECARLO_SPEED = "quick"
 
 FOLDER_PATH = "./ai_states/montecarlo/" + MONTECARLO_SPEED + "/"
 NUM_CYCLES = 10
@@ -79,9 +79,9 @@ for n in range(0, NUM_CYCLES):
             for k in range(0, len(state_history)):
                 win_history.append(0.5)
         
-        game_history_states.append(state_history)
-        game_history_travel.append(travel_history)
-        game_history_wins.append(win_history)
+        game_history_states.extend(state_history)
+        game_history_travel.extend(travel_history)
+        game_history_wins.extend(win_history)
         
     for epoch in range(0, EPOCH_SIZE):
         #trim data through ranndom sampling
@@ -120,18 +120,18 @@ for n in range(0, NUM_CYCLES):
         
     # Plot the loss over epoch
     plt.figure()
-    plt.plot(epoch, v_loss_np)
+    plt.plot(range(0,EPOCH_SIZE), v_loss_np)
     plt.title('loss over epochs, v')
     plt.xlabel('Number of Epoch')
     plt.ylabel('Loss')
     
     # Plot the loss over epoch
     plt.figure()
-    plt.plot(epoch, v_loss_np)
-    plt.title('loss over epochs, v')
+    plt.plot(range(0,EPOCH_SIZE), p_loss_np)
+    plt.title('loss over epochs, p')
     plt.xlabel('Number of Epoch')
     plt.ylabel('Loss')
         
 
-    torch.save(v_net.state_dict(), FOLDER_PATH + str(int((n+1) * EPOCH_SIZE)) + "v")
-    torch.save(p_net.state_dict(), FOLDER_PATH + str(int((n+1) * EPOCH_SIZE)) + "p")
+    #torch.save(v_net.state_dict(), FOLDER_PATH + str(int((n+1) * EPOCH_SIZE)) + "v")
+    #torch.save(p_net.state_dict(), FOLDER_PATH + str(int((n+1) * EPOCH_SIZE)) + "p")
